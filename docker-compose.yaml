@@ -1,0 +1,82 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - ./:/var/www
+    ports:
+      - "80:80"
+    networks:
+      - symfony_network
+      - redis_network
+      - mysql_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - redis_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    secrets:
+      - mysql_root_password
+      - mysql_database
+      - mysql_user
+      - mysql_password
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE_FILE: /run/secrets/mysql_database
+      MYSQL_USER_FILE: /run/secrets/mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    volumes:
+      - ./docker/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets:
+      - mysql_root_password
+    ports:
+      - "8080:80"
+    networks:
+      - mysql_network
+
+networks:
+  symfony_network:
+    driver: bridge
+  redis_network:
+    driver: bridge
+  mysql_network:
+    driver: bridge
+
+secrets:
+  mysql_root_password:
+    file: ./docker/secrets/mysql_root_password
+  mysql_database:
+    file: ./docker/secrets/mysql_database
+  mysql_user:
+    file: ./docker/secrets/mysql_user
+  mysql_password:
+    file: ./docker/secrets/mysql_password

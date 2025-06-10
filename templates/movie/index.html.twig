@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ title|default('Movies') }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ title|default('Movies') }}</h1>
+    <h2 class="mb-4">{{ duration }}</h2>
+    <div class="row">
+        {% for movie in movies %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ movie.title }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ movie.director }}</h6>
+                        <p class="card-text">
+                            <strong>Year:</strong> {{ movie.releaseYear }}<br>
+                            <strong>Genre:</strong> {{ movie.genre }}<br>
+                            <strong>Rating:</strong> {{ movie.rating }}/10
+                        </p>
+                        {% if movie.description %}
+                            <p class="card-text">{{ movie.description|slice(0, 150) }}...</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No movies found.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 
